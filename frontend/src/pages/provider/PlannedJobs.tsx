@@ -1,7 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, ApiError } from "../../api/client";
-import type { PlannedJobRequest } from "../../api/types";
+import type { PlannedJobRequest, ServiceProviderProfile } from "../../api/types";
 import { TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
+import { MapView, type MapMarkerSpec } from "../../components/MapView";
+import { ListSkeleton } from "../../components/Skeleton";
+import { useToast } from "../../components/Toast";
 
 function defaultValidUntil(): string {
   const d = new Date();
@@ -11,10 +14,16 @@ function defaultValidUntil(): string {
 
 export function PlannedJobsPage() {
   const [jobs, setJobs] = useState<PlannedJobRequest[] | null>(null);
+  const [profile, setProfile] = useState<ServiceProviderProfile | null>(null);
   const [openQuoteFor, setOpenQuoteFor] = useState<string | null>(null);
 
   async function refresh() {
-    setJobs(await api.get<PlannedJobRequest[]>("/job-requests/planned/open"));
+    const [j, prof] = await Promise.all([
+      api.get<PlannedJobRequest[]>("/job-requests/planned/open"),
+      api.get<ServiceProviderProfile>("/providers/me").catch(() => null),
+    ]);
+    setJobs(j);
+    setProfile(prof);
   }
 
   useEffect(() => {
@@ -27,8 +36,49 @@ export function PlannedJobsPage() {
     <div className="card">
       <h1>Tervezett munkák</h1>
       <p className="subtitle">Küldj árajánlatot a hozzád illő nyitott munkákra. Munkánként egy ajánlatot adhatsz.</p>
-      {jobs === null && <p>Betöltés...</p>}
+      {jobs === null && <ListSkeleton />}
       {jobs?.length === 0 && <p className="subtitle">Jelenleg nincs hozzád illő tervezett munka.</p>}
+      {jobs && jobs.length > 0 && (
+        <MapView
+          center={profile ? { latitude: profile.latitude, longitude: profile.longitude } : jobs[0]}
+          zoom={12}
+          markers={[
+            ...(profile
+              ? [
+                  {
+                    id: "me",
+                    latitude: profile.latitude,
+                    longitude: profile.longitude,
+                    emoji: "🔧",
+                    label: "Én",
+                    variant: "primary" as const,
+                  },
+                ]
+              : []),
+            ...jobs.map<MapMarkerSpec>((jr) => ({
+              id: jr.id,
+              latitude: jr.latitude,
+              longitude: jr.longitude,
+              emoji: TRADE_ICONS[jr.trade],
+              label: jr.customer.name,
+              popup: (
+                <div className="map-popup">
+                  <strong>{TRADE_LABELS[jr.trade]}</strong>
+                  {jr.description}
+                  <br />
+                  {jr.customer.name}
+                  {!jr.alreadyQuoted && (
+                    <>
+                      <br />
+                      <button onClick={() => setOpenQuoteFor(jr.id)}>Árajánlat küldése</button>
+                    </>
+                  )}
+                </div>
+              ),
+            })),
+          ]}
+        />
+      )}
       <ul className="list">
         {jobs?.map((jr) => (
           <li key={jr.id} className="list-item column">
@@ -73,6 +123,7 @@ export function PlannedJobsPage() {
 }
 
 function QuoteForm({ jobRequestId, onSubmitted }: { jobRequestId: string; onSubmitted: () => void }) {
+  const { showToast } = useToast();
   const [price, setPrice] = useState(15000);
   const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState(120);
   const [message, setMessage] = useState("");
@@ -94,6 +145,7 @@ function QuoteForm({ jobRequestId, onSubmitted }: { jobRequestId: string; onSubm
         proposedStartAt: proposedStartAt ? new Date(proposedStartAt).toISOString() : undefined,
         validUntil: new Date(validUntil).toISOString(),
       });
+      showToast("Ajánlat elküldve!");
       onSubmitted();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Nem sikerült elküldeni az ajánlatot");

@@ -6,9 +6,13 @@ import { BOOKING_STATUS_LABELS, JOB_STATUS_LABELS, TRADE_ICONS, TRADE_LABELS } f
 import { ReviewForm } from "../../components/ReviewForm";
 import { Chat } from "../../components/Chat";
 import { PaymentBox } from "../../components/PaymentBox";
+import { MapView, type MapMarkerSpec } from "../../components/MapView";
+import { ListSkeleton } from "../../components/Skeleton";
+import { useToast } from "../../components/Toast";
 
 export function JobRequestDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { showToast } = useToast();
   const [jobRequest, setJobRequest] = useState<JobRequest | null>(null);
   const [providers, setProviders] = useState<RankedProvider[] | null>(null);
   const [quotes, setQuotes] = useState<Quote[] | null>(null);
@@ -46,6 +50,7 @@ export function JobRequestDetailPage() {
     setAcceptingId(quoteId);
     try {
       await api.post(`/quotes/${quoteId}/accept`);
+      showToast("Foglalás létrehozva!");
       await refresh();
     } catch (err) {
       setAcceptError(err instanceof ApiError ? err.message : "Nem sikerült elfogadni az ajánlatot");
@@ -81,7 +86,39 @@ export function JobRequestDetailPage() {
           <p className="subtitle">
             Értesítettük a legközelebbi verifikált szakembereket. Amint valaki elfogadja, itt fog megjelenni.
           </p>
+          {providers === null && <ListSkeleton rows={2} />}
           {providers && providers.length === 0 && <p>Jelenleg nincs elérhető szakember ebben a szakágban.</p>}
+          {providers && providers.length > 0 && (
+            <MapView
+              center={{ latitude: jobRequest.latitude, longitude: jobRequest.longitude }}
+              zoom={12}
+              markers={[
+                {
+                  id: "job",
+                  latitude: jobRequest.latitude,
+                  longitude: jobRequest.longitude,
+                  emoji: "🏠",
+                  label: "A munka helyszíne",
+                  variant: "primary",
+                },
+                ...providers.map<MapMarkerSpec>((p) => ({
+                  id: p.id,
+                  latitude: p.latitude,
+                  longitude: p.longitude,
+                  emoji: TRADE_ICONS[jobRequest.trade],
+                  label: p.providerName,
+                  popup: (
+                    <div className="map-popup">
+                      <strong>{p.providerName}</strong>
+                      {p.distanceKm} km · kb. {p.estimatedArrivalMinutes} perc
+                      <br />
+                      {p.ratingAvg ? `${p.ratingAvg.toFixed(1)} ★` : "Nincs értékelés"} · ~{p.calloutFee} Ft
+                    </div>
+                  ),
+                })),
+              ]}
+            />
+          )}
           <ul className="list">
             {providers?.map((p) => (
               <li key={p.id} className="list-item">
@@ -107,7 +144,39 @@ export function JobRequestDetailPage() {
             válassz.
           </p>
           {acceptError && <p className="error">{acceptError}</p>}
+          {quotes === null && <ListSkeleton rows={2} />}
           {quotes && quotes.length === 0 && <p>Még nem érkezett ajánlat.</p>}
+          {quotes && quotes.length > 0 && (
+            <MapView
+              center={{ latitude: jobRequest.latitude, longitude: jobRequest.longitude }}
+              zoom={12}
+              markers={[
+                {
+                  id: "job",
+                  latitude: jobRequest.latitude,
+                  longitude: jobRequest.longitude,
+                  emoji: "🏠",
+                  label: "A munka helyszíne",
+                  variant: "primary",
+                },
+                ...quotes
+                  .filter((q) => q.provider)
+                  .map<MapMarkerSpec>((q) => ({
+                    id: q.id,
+                    latitude: q.provider!.latitude,
+                    longitude: q.provider!.longitude,
+                    emoji: TRADE_ICONS[jobRequest.trade],
+                    label: q.provider!.user?.name ?? "Szolgáltató",
+                    popup: (
+                      <div className="map-popup">
+                        <strong>{q.provider!.user?.name}</strong>
+                        {q.price} Ft · kb. {Math.round(q.estimatedDurationMinutes / 60)} óra
+                      </div>
+                    ),
+                  })),
+              ]}
+            />
+          )}
           <div className="list">
             {quotes?.map((q, idx) => (
               <div key={q.id} className={`quote-card ${idx === 0 ? "best" : ""}`}>
@@ -143,6 +212,22 @@ export function JobRequestDetailPage() {
               {BOOKING_STATUS_LABELS[booking.status]}
             </span>
           </p>
+
+          <MapView
+            center={{ latitude: jobRequest.latitude, longitude: jobRequest.longitude }}
+            zoom={14}
+            height={180}
+            markers={[
+              {
+                id: "job",
+                latitude: jobRequest.latitude,
+                longitude: jobRequest.longitude,
+                emoji: TRADE_ICONS[jobRequest.trade],
+                label: jobRequest.address,
+                variant: "primary",
+              },
+            ]}
+          />
 
           <Chat bookingId={booking.id} />
 

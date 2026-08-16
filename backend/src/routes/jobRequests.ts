@@ -155,6 +155,8 @@ jobRequestsRouter.get(
           ratingAvg: provider.ratingAvg,
           calloutFee: provider.calloutFee,
           hourlyRate: provider.hourlyRate,
+          latitude: provider.latitude,
+          longitude: provider.longitude,
           distanceKm: Math.round(distance * 10) / 10,
           estimatedArrivalMinutes: estimatedArrivalMinutes(distance),
         };

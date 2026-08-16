@@ -74,4 +74,17 @@ Szakág-választás ikonokkal, probléma leírása, cím megadása, a legközele
 
 **Vizuális nyelv egyelőre**: megbízható-visszafogott irányba tolva (sötétzöld elsődleges szín, letisztult kártyák, jól látható jelvény-szerű állapotcímkék a verifikációhoz/foglalás-státuszhoz/fizetéshez) — ez egy kiindulási pont, nem végleges döntés a design csapat 7. pontban feltett kérdésére.
 
-**Amit ez a build nem tartalmaz még**: fotó/videó feltöltés, élő térképes követés, push notification, valódi fizetési gateway. Ezek a következő iterációk témái.
+### 3. kör: térkép + UX-finomítás
+
+Válasz a 7. pont "kell-e élő térképes követés" kérdésére: **statikus térkép igen, élő GPS-nyomkövetés nem** — ez tűnik a jó középútnak ebben a fázisban.
+
+- **Helyszín-választás térképen**: az új-munka űrlapon a korábbi kézi koordináta-mezők helyett egy kattintható/húzható térképes jelölő van (a pontos koordináták kézi megadása másodlagos, összecsukott opcióként megmaradt tartaléknak). "Saját helyzetem" gomb az azonnali geolokációhoz.
+- **Szakember-térkép a sürgős flow-ban**: a megrendelő a munka helyszínét és a rangsorolt szakembereket egyszerre látja a térképen (jelölő + lista együtt, nem az egyik váltja a másikat), popupban ár/idő/értékelés.
+- **Ajánlat-térkép a tervezett flow-ban**: hasonlóan, az ajánlatot adó szolgáltatók helye is látszik a térképen.
+- **Szolgáltatói oldal**: a beérkező (sürgős) és tervezett munkák térképen is megjelennek a szolgáltató saját helyzetéhez képest; a térképi jelölő popupjából közvetlenül el lehet fogadni a munkát / árajánlatot lehet küldeni rá — nem kell visszagörgetni a listához.
+- **Foglalás-nézet**: kis, nem interaktív térkép mutatja a munka pontos helyét mindkét oldalon.
+- **Visszajelzés**: rövid, eltűnő toast-üzenetek (pl. "Munka elfogadva!", "Sikeres fizetés!") a korábbi néma állapotváltások helyett, és pulzáló váz (skeleton) placeholder a listák betöltésekor a puszta "Betöltés..." szöveg helyett.
+
+A térkép OpenStreetMap-alapú (Leaflet), API-kulcs nélkül működik — ez fontos, mert nem köti a projektet egy fizetős térkép-szolgáltatóhoz már az MVP fázisban sem.
+
+**Amit ez a build nem tartalmaz még**: fotó/videó feltöltés, élő GPS-nyomkövetés, push notification, valódi fizetési gateway, helyszín-keresés/geokódolás címből (a "Cím" mező és a térképi pont egyelőre külön adatok, nincs automatikus összekapcsolás). Ezek a következő iterációk témái.

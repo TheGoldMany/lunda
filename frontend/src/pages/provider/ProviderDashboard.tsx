@@ -1,24 +1,31 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../../api/client";
-import type { Booking, IncomingJobRequest } from "../../api/types";
+import type { Booking, IncomingJobRequest, ServiceProviderProfile } from "../../api/types";
 import { BOOKING_STATUS_LABELS, TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
 import { ReviewForm } from "../../components/ReviewForm";
 import { Chat } from "../../components/Chat";
 import { PaymentBox } from "../../components/PaymentBox";
+import { MapView, type MapMarkerSpec } from "../../components/MapView";
+import { ListSkeleton } from "../../components/Skeleton";
+import { useToast } from "../../components/Toast";
 
 export function ProviderDashboardPage() {
+  const { showToast } = useToast();
   const [incoming, setIncoming] = useState<IncomingJobRequest[] | null>(null);
   const [bookings, setBookings] = useState<Booking[] | null>(null);
+  const [profile, setProfile] = useState<ServiceProviderProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
 
   async function refresh() {
-    const [inc, bks] = await Promise.all([
+    const [inc, bks, prof] = await Promise.all([
       api.get<IncomingJobRequest[]>("/bookings/incoming"),
       api.get<Booking[]>("/bookings/me"),
+      api.get<ServiceProviderProfile>("/providers/me").catch(() => null),
     ]);
     setIncoming(inc);
     setBookings(bks);
+    setProfile(prof);
   }
 
   useEffect(() => {
@@ -32,6 +39,7 @@ export function ProviderDashboardPage() {
     setAcceptingId(jobRequestId);
     try {
       await api.post("/bookings", { jobRequestId });
+      showToast("Munka elfogadva!");
       await refresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Nem sikerült elfogadni a munkát");
@@ -47,8 +55,47 @@ export function ProviderDashboardPage() {
 
       <section>
         <h2>Beérkező munkák</h2>
-        {incoming === null && <p>Betöltés...</p>}
+        {incoming === null && <ListSkeleton />}
         {incoming?.length === 0 && <p className="subtitle">Jelenleg nincs hozzád illő nyitott munka.</p>}
+        {incoming && incoming.length > 0 && (
+          <MapView
+            center={profile ? { latitude: profile.latitude, longitude: profile.longitude } : incoming[0]}
+            zoom={12}
+            markers={[
+              ...(profile
+                ? [
+                    {
+                      id: "me",
+                      latitude: profile.latitude,
+                      longitude: profile.longitude,
+                      emoji: "🔧",
+                      label: "Én",
+                      variant: "primary" as const,
+                    },
+                  ]
+                : []),
+              ...incoming.map<MapMarkerSpec>((jr) => ({
+                id: jr.id,
+                latitude: jr.latitude,
+                longitude: jr.longitude,
+                emoji: TRADE_ICONS[jr.trade],
+                label: jr.customer.name,
+                popup: (
+                  <div className="map-popup">
+                    <strong>{TRADE_LABELS[jr.trade]}</strong>
+                    {jr.description}
+                    <br />
+                    {jr.distanceKm} km · kb. {jr.estimatedArrivalMinutes} perc
+                    <br />
+                    <button onClick={() => handleAccept(jr.id)} disabled={acceptingId === jr.id}>
+                      {acceptingId === jr.id ? "..." : "Elfogadom"}
+                    </button>
+                  </div>
+                ),
+              })),
+            ]}
+          />
+        )}
         <ul className="list">
           {incoming?.map((jr) => (
             <li key={jr.id} className="list-item">
@@ -70,7 +117,7 @@ export function ProviderDashboardPage() {
 
       <section>
         <h2>Foglalásaim</h2>
-        {bookings === null && <p>Betöltés...</p>}
+        {bookings === null && <ListSkeleton />}
         <ul className="list">
           {bookings?.map((b) => (
             <BookingRow key={b.id} booking={b} onChanged={refresh} />
@@ -82,6 +129,7 @@ export function ProviderDashboardPage() {
 }
 
 function BookingRow({ booking, onChanged }: { booking: Booking; onChanged: () => void }) {
+  const { showToast } = useToast();
   const [finalPrice, setFinalPrice] = useState(0);
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +139,7 @@ function BookingRow({ booking, onChanged }: { booking: Booking; onChanged: () =>
     setCompleting(true);
     try {
       await api.patch(`/bookings/${booking.id}/complete`, { finalPrice });
+      showToast("Munka lezárva, fizetésre vár.");
       onChanged();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Nem sikerült lezárni a munkát");
@@ -112,6 +161,24 @@ function BookingRow({ booking, onChanged }: { booking: Booking; onChanged: () =>
         </div>
         <span className={`badge status-${booking.status.toLowerCase()}`}>{BOOKING_STATUS_LABELS[booking.status]}</span>
       </div>
+
+      {booking.jobRequest && (
+        <MapView
+          center={{ latitude: booking.jobRequest.latitude, longitude: booking.jobRequest.longitude }}
+          zoom={14}
+          height={160}
+          markers={[
+            {
+              id: "job",
+              latitude: booking.jobRequest.latitude,
+              longitude: booking.jobRequest.longitude,
+              emoji: TRADE_ICONS[booking.jobRequest.trade],
+              label: booking.jobRequest.address,
+              variant: "primary",
+            },
+          ]}
+        />
+      )}
 
       <Chat bookingId={booking.id} />
 

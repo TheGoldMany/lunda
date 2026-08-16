@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api, ApiError } from "../api/client";
 import type { Payment } from "../api/types";
+import { useToast } from "./Toast";
 
 export function PaymentBox({
   payment,
@@ -11,6 +12,7 @@ export function PaymentBox({
   canPay: boolean;
   onPaid: () => void;
 }) {
+  const { showToast } = useToast();
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,6 +21,7 @@ export function PaymentBox({
     setPaying(true);
     try {
       await api.post(`/payments/${payment.id}/pay`);
+      showToast("Sikeres fizetés!");
       onPaid();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Nem sikerült a fizetés");

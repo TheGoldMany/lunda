@@ -8,8 +8,10 @@ Ez a build a koncepció mindkét fő flow-ját végigviszi:
 - **Tervezett munka (4.2)**: időablakkal feladott munka → több szolgáltató árajánlatot küld → megrendelő összehasonlítja és elfogad egyet → Booking az egyeztetett időpontra.
 - Mindkét flow innentől közösen folytatódik: **chat** a foglaláshoz kötve → munka lezárása végösszeggel → **fizetés** (mockolt, 15% jutalékkal) → **kétirányú értékelés** (csak fizetés után).
 - **Admin**: szolgáltató-verifikációs sor jóváhagyással/elutasítással.
+- **Térkép mindenhol, ahol helyszín számít**: kattintható/húzható térképes helyszín-választó az új munka feladásakor, szakember-/ajánlat-térkép a rangsorolt lista mellett, térképes beérkező-munka popup közvetlen elfogadással a szolgáltatói oldalon, kis statikus térkép a foglalás-nézeteken. OpenStreetMap-alapú (Leaflet), nincs API-kulcs.
+- **UX-finomítás**: toast-visszajelzés a fő akciókhoz (elfogadás, lezárás, fizetés, árajánlat), pulzáló skeleton-placeholder listák betöltés közben a puszta szöveg helyett.
 
-Amit ez a build *nem* tartalmaz (valódi fizetési gateway, push notification, fotó/videó feltöltés, élő térképes követés) az a `docs/concept/dev.md` és `docs/concept/design.md` alján van felsorolva, iterációnkénti bontásban.
+Amit ez a build *nem* tartalmaz (valódi fizetési gateway, push notification, fotó/videó feltöltés, élő GPS-nyomkövetés, cím-alapú geokódolás) az a `docs/concept/dev.md` és `docs/concept/design.md` alján van felsorolva, iterációnkénti bontásban.
 
 ## Struktúra
 

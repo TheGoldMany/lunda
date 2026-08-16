@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../../api/client";
 import type { JobRequest } from "../../api/types";
 import { JOB_STATUS_LABELS, TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
+import { ListSkeleton } from "../../components/Skeleton";
 
 export function MyJobRequestsPage() {
   const [requests, setRequests] = useState<JobRequest[] | null>(null);
@@ -10,8 +11,6 @@ export function MyJobRequestsPage() {
   useEffect(() => {
     api.get<JobRequest[]>("/job-requests/me").then(setRequests);
   }, []);
-
-  if (!requests) return <p>Betöltés...</p>;
 
   return (
     <div className="card">
@@ -21,9 +20,10 @@ export function MyJobRequestsPage() {
           + Új munka
         </Link>
       </div>
-      {requests.length === 0 && <p className="subtitle">Még nincs leadott munkád.</p>}
+      {requests === null && <ListSkeleton />}
+      {requests?.length === 0 && <p className="subtitle">Még nincs leadott munkád.</p>}
       <ul className="list">
-        {requests.map((r) => (
+        {requests?.map((r) => (
           <li key={r.id}>
             <Link to={`/customer/requests/${r.id}`} className="list-item">
               <span className="trade-icon">{TRADE_ICONS[r.trade]}</span>

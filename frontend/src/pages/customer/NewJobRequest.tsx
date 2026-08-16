@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import type { JobRequest, Trade, Urgency } from "../../api/types";
 import { TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
+import { MapView } from "../../components/MapView";
 
 const BUDAPEST_CENTER = { latitude: 47.4979, longitude: 19.0402 };
 const TRADES: Trade[] = ["WATER", "GAS", "ELECTRICITY"];
@@ -22,22 +23,35 @@ export function NewJobRequestPage() {
   const [address, setAddress] = useState("");
   const [latitude, setLatitude] = useState(BUDAPEST_CENTER.latitude);
   const [longitude, setLongitude] = useState(BUDAPEST_CENTER.longitude);
+  const [mapCenter, setMapCenter] = useState(BUDAPEST_CENTER);
+  const [locating, setLocating] = useState(false);
   const [preferredStartAt, setPreferredStartAt] = useState(defaultDateInput(3, 8));
   const [preferredEndAt, setPreferredEndAt] = useState(defaultDateInput(7, 18));
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  function locateMe() {
     if (!navigator.geolocation) return;
+    setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLatitude(pos.coords.latitude);
-        setLongitude(pos.coords.longitude);
+        const here = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+        setLatitude(here.latitude);
+        setLongitude(here.longitude);
+        setMapCenter(here);
+        setLocating(false);
       },
       () => {
-        // Geolocation denied/unavailable — keep the Budapest center default.
-      }
+        // Geolocation denied/unavailable/timed out — keep the Budapest center default.
+        setLocating(false);
+      },
+      { timeout: 8000 }
     );
+  }
+
+  useEffect(() => {
+    locateMe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handleSubmit(e: FormEvent) {
@@ -146,8 +160,33 @@ export function NewJobRequestPage() {
           </div>
         )}
 
+        <div>
+          <div className="row-between">
+            <label>Pontos helyszín a térképen</label>
+            <button type="button" className="link-button" onClick={locateMe} disabled={locating}>
+              {locating ? "Keresés..." : "📍 Saját helyzetem"}
+            </button>
+          </div>
+          <MapView
+            center={mapCenter}
+            zoom={14}
+            height={280}
+            pickedLocation={{ latitude, longitude }}
+            onPick={(lat, lng) => {
+              setLatitude(lat);
+              setLongitude(lng);
+            }}
+            onPickedDrag={(lat, lng) => {
+              setLatitude(lat);
+              setLongitude(lng);
+            }}
+            recenterOnCenterChange
+          />
+          <p className="map-hint">Kattints a térképre, vagy húzd a jelölőt a pontos helyszínre.</p>
+        </div>
+
         <details>
-          <summary>Helyszín pontosítása (koordináták)</summary>
+          <summary>Koordináták kézzel</summary>
           <div className="coord-row">
             <label>
               Szélesség

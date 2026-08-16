@@ -40,6 +40,8 @@ export interface RankedProvider {
   ratingAvg: number | null;
   calloutFee: string;
   hourlyRate: string;
+  latitude: number;
+  longitude: number;
   distanceKm: number;
   estimatedArrivalMinutes: number;
 }

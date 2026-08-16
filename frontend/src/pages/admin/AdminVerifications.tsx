@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { api, ApiError } from "../../api/client";
 import type { ServiceProviderProfile } from "../../api/types";
 import { TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
+import { ListSkeleton } from "../../components/Skeleton";
+import { useToast } from "../../components/Toast";
 
 export function AdminVerificationsPage() {
+  const { showToast } = useToast();
   const [pending, setPending] = useState<ServiceProviderProfile[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -21,6 +24,7 @@ export function AdminVerificationsPage() {
     setBusyId(id);
     try {
       await api.patch(`/providers/${id}/verify`, { status });
+      showToast(status === "APPROVED" ? "Szolgáltató jóváhagyva." : "Szolgáltató elutasítva.");
       await refresh();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Nem sikerült frissíteni");
@@ -33,7 +37,7 @@ export function AdminVerificationsPage() {
     <div className="card">
       <h1>Szolgáltató-verifikációk</h1>
       {error && <p className="error">{error}</p>}
-      {pending === null && <p>Betöltés...</p>}
+      {pending === null && <ListSkeleton />}
       {pending?.length === 0 && <p className="subtitle">Nincs elbírálásra váró profil.</p>}
       <ul className="list">
         {pending?.map((p) => (
