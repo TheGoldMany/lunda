@@ -1,5 +1,6 @@
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import { NotificationBell } from "./NotificationBell";
 
 export function Layout() {
   const { user, logout } = useAuth();
@@ -39,6 +40,7 @@ export function Layout() {
             </>
           )}
           {user?.role === "ADMIN" && <Link to="/admin/verifications">Verifikációk</Link>}
+          {user && <NotificationBell role={user.role} />}
           {user && (
             <button className="link-button" onClick={handleLogout}>
               Kijelentkezés ({user.name})

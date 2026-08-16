@@ -87,4 +87,10 @@ Válasz a 7. pont "kell-e élő térképes követés" kérdésére: **statikus t
 
 A térkép OpenStreetMap-alapú (Leaflet), API-kulcs nélkül működik — ez fontos, mert nem köti a projektet egy fizetős térkép-szolgáltatóhoz már az MVP fázisban sem.
 
-**Amit ez a build nem tartalmaz még**: fotó/videó feltöltés, élő GPS-nyomkövetés, push notification, valódi fizetési gateway, helyszín-keresés/geokódolás címből (a "Cím" mező és a térképi pont egyelőre külön adatok, nincs automatikus összekapcsolás). Ezek a következő iterációk témái.
+### 4. kör: szolgáltatói elérhetőség, fotó a probléma leírásához, értesítések
+
+- **"Elérhető vagyok" kapcsoló** a szolgáltatói felület tetején (Munkák oldal) — egy érintéssel ki/bekapcsolható, azonnali visszajelzéssel (toast). Válasz arra a korábban rejtve maradt hiányosságra, hogy a `isAvailable` adat megvolt, de semmilyen felület nem engedte állítani.
+- **Fotó csatolása a probléma leíráshoz** — pontosan a design koncepció 4.1 pontjában szereplő elvárás ("rövid szöveg + fotó/videó feltöltés"). Előnézettel, eltávolítás-gombbal; a fotó megjelenik a megrendelő saját listájában/részletes nézetében és a szolgáltató beérkező-munka listájában/térképi popupjában is (nem csak elrejtve várja, hogy valaki rákattintson).
+- **Értesítési harang** a fejlécben, olvasatlan-jelvénnyel és lenyíló listával — ez adja a válasz a korábbi "nincs push notification" hiányra egy, ebben a fázisban reálisan megvalósítható formában: nem böngésző-szintű push, hanem alkalmazáson belüli, azonnal látható visszajelzés a fontos eseményekhez (elfogadták a munkát, új ajánlat érkezett, fizetni kell, megérkezett a fizetés, elbírálták a verifikációt).
+
+**Amit ez a build nem tartalmaz még**: videó feltöltés, élő GPS-nyomkövetés, valódi böngésző-push, valódi fizetési gateway, helyszín-keresés/geokódolás címből (a "Cím" mező és a térképi pont egyelőre külön adatok, nincs automatikus összekapcsolás). Ezek a következő iterációk témái.

@@ -26,7 +26,11 @@ export function MyJobRequestsPage() {
         {requests?.map((r) => (
           <li key={r.id}>
             <Link to={`/customer/requests/${r.id}`} className="list-item">
-              <span className="trade-icon">{TRADE_ICONS[r.trade]}</span>
+              {r.photoUrl ? (
+                <img className="job-photo-thumb" src={r.photoUrl} alt="" />
+              ) : (
+                <span className="trade-icon">{TRADE_ICONS[r.trade]}</span>
+              )}
               <div className="list-item-body">
                 <strong>{TRADE_LABELS[r.trade]}</strong>
                 <span className="muted">{r.description}</span>

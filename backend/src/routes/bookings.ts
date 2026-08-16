@@ -7,6 +7,7 @@ import { BookingStatus, JobRequestStatus, Role, VerificationStatus } from "../ge
 import { distanceKm, estimatedArrivalMinutes } from "../lib/geo";
 import { paramId } from "../lib/params";
 import { commissionFor } from "../lib/payment";
+import { notify } from "../lib/notifications";
 
 export const bookingsRouter = Router();
 
@@ -57,7 +58,10 @@ bookingsRouter.post(
   asyncHandler(async (req, res) => {
     const body = createSchema.parse(req.body);
 
-    const provider = await prisma.serviceProvider.findUnique({ where: { userId: req.auth!.userId } });
+    const provider = await prisma.serviceProvider.findUnique({
+      where: { userId: req.auth!.userId },
+      include: { user: { select: { name: true } } },
+    });
     if (!provider || provider.verificationStatus !== VerificationStatus.APPROVED) {
       return res.status(403).json({ error: "Provider not verified" });
     }
@@ -82,6 +86,15 @@ bookingsRouter.post(
         return tx.booking.create({
           data: { jobRequestId: jobRequest.id, providerId: provider.id },
         });
+      });
+
+      await notify({
+        userId: jobRequest.customerId,
+        type: "JOB_ACCEPTED",
+        title: "Elfogadták a munkádat!",
+        body: `${provider.user.name} elindul hozzád.`,
+        jobRequestId: jobRequest.id,
+        bookingId: booking.id,
       });
 
       res.status(201).json(booking);
@@ -138,7 +151,10 @@ bookingsRouter.patch(
     const body = completeSchema.parse(req.body);
 
     const provider = await prisma.serviceProvider.findUnique({ where: { userId: req.auth!.userId } });
-    const booking = await prisma.booking.findUnique({ where: { id: paramId(req, "id") } });
+    const booking = await prisma.booking.findUnique({
+      where: { id: paramId(req, "id") },
+      include: { jobRequest: true },
+    });
     if (!booking || !provider || booking.providerId !== provider.id) {
       return res.status(404).json({ error: "Booking not found" });
     }
@@ -158,6 +174,15 @@ bookingsRouter.patch(
           commissionAmount: commissionFor(body.finalPrice),
         },
       });
+    });
+
+    await notify({
+      userId: booking.jobRequest.customerId,
+      type: "PAYMENT_DUE",
+      title: "A munka elkészült — fizetés esedékes",
+      body: `Végösszeg: ${body.finalPrice} Ft`,
+      jobRequestId: booking.jobRequestId,
+      bookingId: booking.id,
     });
 
     const updated = await prisma.booking.findUnique({ where: { id: booking.id }, include: { payment: true } });

@@ -101,10 +101,23 @@ Uber-szerű, kétoldalú piactér-alkalmazás, ahol a fuvar helyett szakipari sz
 - **Fizetés**: a munka lezárásakor (`finalPrice` rögzítésekor) automatikusan létrejön egy `Payment` rekord 15%-os jutalékkal; a megrendelő "kifizeti" (mockolt, nincs valódi Barion/Stripe hívás). Az értékelés csak fizetés után adható le — ez követi a koncepcióban leírt sorrendet (végső ár → fizetés → értékelés).
 - **Chat**: a foglaláshoz kötött, egyszerű szöveges üzenetváltás megrendelő és szolgáltató között, mindkét oldali nézetben (5 másodperces pollinggal, mint a többi élő állapot).
 
+### 3. kör (2026-08-16): térkép + UX-finomítás
+
+- **Helyszín-választás**: az `/job-requests` létrehozásánál a kliens térképes kattintással/húzással állítja be a lat/lng-t (Leaflet), a kézi koordináta-mezők tartalék opcióként megmaradtak.
+- **Térképek mindenhol, ahol helyszín számít**: rangsorolt szolgáltatók + árajánlatot adó szolgáltatók térképen (popup: ár/idő/értékelés), szolgáltatói beérkező/tervezett-munka térkép popupból közvetlen elfogadással/ajánlatadással, statikus térkép a foglalás-nézeteken.
+- **UX-finomítás**: toast-visszajelzés a fő akciókhoz, skeleton-placeholder listák betöltéskor.
+
+### 4. kör (2026-08-16): elérhetőség-kapcsoló + fotófeltöltés + értesítések
+
+- **Szolgáltatói elérhetőség**: `ServiceProvider.isAvailable` már a séma része volt, de nem volt UI, ami állítsa — a szolgáltató most be/kikapcsolhatja magát (`PATCH /providers/me/availability`); kikapcsolt állapotban nem jelenik meg a sürgős flow rangsorolt találatai között.
+- **Fotó feltöltés a munka feladásakor**: mivel nincs külső fájltároló (S3 stb.) bekötve, a kép a kliensen kerül átméretezésre/tömörítésre (max 1280px, JPEG 80%) és `data:` URL-ként kerül a meglévő `photoUrl` mezőbe — ez korlátozott skálázhatóságú megoldás (a DB-ben landol a kép), de MVP-nek elég, és a `Notification`/`Quote`/stb. mintázatot követve könnyen lecserélhető valódi feltöltésre később.
+- **Értesítések**: `Notification` modell + `GET /notifications`, `PATCH /notifications/:id/read`, `PATCH /notifications/read-all`. A rendszer az alábbi eseményeknél hoz létre értesítést: munka elfogadva (sürgős), új árajánlat érkezett, árajánlat elfogadva, fizetés esedékes (munka lezárva), fizetés megérkezett, verifikáció elbírálva. Ez a valódi böngésző-push (amihez service worker + push-szolgáltatás kellene) gyakorlati helyettesítője ebben a szakaszban — pollingol, nem valódi push.
+
 ### Tudatos egyszerűsítések, amik továbbra is fennállnak
 
 - **Nincs valódi fizetési gateway** (Barion/Stripe) — a "Fizetés" gomb azonnal PAID-re állítja a mockolt Payment rekordot, nincs kártyaadat-kezelés.
-- **Nincs push notification** — minden nézet pollinggal frissül (5–8 mp).
+- **Nincs valódi push notification** — az értesítések pollinggal frissülnek (6 mp), nem böngésző-szintű push.
 - **Az elfogadás egylépéses** a sürgős flow-ban: bármelyik illeszkedő szakágú, verifikált és elérhető szolgáltató láthatja és elfogadhatja a nyitott kérést a beérkező-listájában (nincs külön "meghívom ezt a szolgáltatót" lépés).
-- Egyetlen város (Budapest) feltételezve, koordináta-alapú (haversine) távolságszámítással, valós térkép/geokódolás nélkül.
-- Fotó/videó feltöltés még nincs (a `photoUrl` mező csak egy URL-t fogad el, nincs fájlfeltöltő UI).
+- Egyetlen város (Budapest) feltételezve, koordináta-alapú (haversine) távolságszámítással; a "Cím" szövegmező és a térképi koordináta-pont külön adat, nincs automatikus geokódolás.
+- A fotó `data:` URL-ként a JobRequest sorában tárolódik — production-ben ezt érdemes lenne külön objektum-tárolóra (S3-kompatibilis) váltani, ha a képek mérete/száma nő.
+- Élő GPS-nyomkövetés nincs (tudatos döntés, ld. design.md).

@@ -10,8 +10,11 @@ Ez a build a koncepció mindkét fő flow-ját végigviszi:
 - **Admin**: szolgáltató-verifikációs sor jóváhagyással/elutasítással.
 - **Térkép mindenhol, ahol helyszín számít**: kattintható/húzható térképes helyszín-választó az új munka feladásakor, szakember-/ajánlat-térkép a rangsorolt lista mellett, térképes beérkező-munka popup közvetlen elfogadással a szolgáltatói oldalon, kis statikus térkép a foglalás-nézeteken. OpenStreetMap-alapú (Leaflet), nincs API-kulcs.
 - **UX-finomítás**: toast-visszajelzés a fő akciókhoz (elfogadás, lezárás, fizetés, árajánlat), pulzáló skeleton-placeholder listák betöltés közben a puszta szöveg helyett.
+- **Szolgáltatói elérhetőség-kapcsoló**: a szolgáltató egy érintéssel jelezheti, hogy jelenleg nem vállal új munkát — ilyenkor kimarad a sürgős flow rangsorolt találatai közül.
+- **Fotó a munka feladásakor**: kliens-oldali tömörítés, nincs külső fájltároló — a kép `data:` URL-ként landol a meglévő `photoUrl` mezőben.
+- **Értesítési harang**: olvasatlan-jelvény + lenyíló lista a fontosabb eseményekhez (elfogadott munka, új ajánlat, fizetendő/befizetett összeg, verifikációs döntés) — gyakorlati helyettesítője a valódi böngésző-push-nak ebben a fázisban.
 
-Amit ez a build *nem* tartalmaz (valódi fizetési gateway, push notification, fotó/videó feltöltés, élő GPS-nyomkövetés, cím-alapú geokódolás) az a `docs/concept/dev.md` és `docs/concept/design.md` alján van felsorolva, iterációnkénti bontásban.
+Amit ez a build *nem* tartalmaz (valódi fizetési gateway, valódi böngésző-push, videó feltöltés, élő GPS-nyomkövetés, cím-alapú geokódolás) az a `docs/concept/dev.md` és `docs/concept/design.md` alján van felsorolva, iterációnkénti bontásban.
 
 ## Struktúra
 
@@ -69,8 +72,11 @@ Buildhez: `npm run build` (a `dist/` mappába generál statikus fájlokat).
 | `POST /payments/:id/pay` | megrendelő | Fizetés (mockolt) → Payment PAID |
 | `POST /reviews` | megrendelő/szolgáltató | Kétirányú értékelés lezárt és kifizetett munkára |
 | `POST /providers/me` | szolgáltató | Onboarding-profil (szakág, díjszabás, helyszín) |
+| `PATCH /providers/me/availability` | szolgáltató | Elérhetőség be/kikapcsolása |
 | `GET /providers/pending`, `PATCH /providers/:id/verify` | admin | Verifikációs sor jóváhagyással/elutasítással |
+| `GET /notifications` | bárki | Saját értesítések (legutóbbi 30) |
+| `PATCH /notifications/:id/read`, `PATCH /notifications/read-all` | bárki | Értesítés(ek) olvasottnak jelölése |
 
 ## Adatmodell
 
-Lásd `backend/prisma/schema.prisma`: `User`, `ServiceProvider`, `JobRequest`, `Quote`, `Booking`, `Payment`, `Message`, `Review`.
+Lásd `backend/prisma/schema.prisma`: `User`, `ServiceProvider`, `JobRequest`, `Quote`, `Booking`, `Payment`, `Message`, `Review`, `Notification`.

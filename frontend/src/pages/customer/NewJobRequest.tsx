@@ -1,9 +1,10 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import type { JobRequest, Trade, Urgency } from "../../api/types";
 import { TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
 import { MapView } from "../../components/MapView";
+import { compressImageToDataUrl } from "../../lib/image";
 
 const BUDAPEST_CENTER = { latitude: 47.4979, longitude: 19.0402 };
 const TRADES: Trade[] = ["WATER", "GAS", "ELECTRICITY"];
@@ -27,8 +28,26 @@ export function NewJobRequestPage() {
   const [locating, setLocating] = useState(false);
   const [preferredStartAt, setPreferredStartAt] = useState(defaultDateInput(3, 8));
   const [preferredEndAt, setPreferredEndAt] = useState(defaultDateInput(7, 18));
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const [processingPhoto, setProcessingPhoto] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  async function handlePhotoChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setPhotoError(null);
+    setProcessingPhoto(true);
+    try {
+      setPhotoUrl(await compressImageToDataUrl(file));
+    } catch (err) {
+      setPhotoError(err instanceof Error ? err.message : "Nem sikerült feldolgozni a képet");
+    } finally {
+      setProcessingPhoto(false);
+    }
+  }
 
   function locateMe() {
     if (!navigator.geolocation) return;
@@ -62,6 +81,7 @@ export function NewJobRequestPage() {
       const jobRequest = await api.post<JobRequest>("/job-requests", {
         trade,
         description,
+        photoUrl: photoUrl ?? undefined,
         address,
         latitude,
         longitude,
@@ -131,6 +151,22 @@ export function NewJobRequestPage() {
             required
           />
         </label>
+
+        <div>
+          <label>Fotó (opcionális)</label>
+          {photoUrl ? (
+            <div className="photo-preview">
+              <img src={photoUrl} alt="Feltöltött fotó előnézete" />
+              <button type="button" className="link-button" onClick={() => setPhotoUrl(null)}>
+                Eltávolítás
+              </button>
+            </div>
+          ) : (
+            <input type="file" accept="image/*" onChange={handlePhotoChange} disabled={processingPhoto} />
+          )}
+          {processingPhoto && <p className="map-hint">Kép feldolgozása...</p>}
+          {photoError && <p className="error">{photoError}</p>}
+        </div>
 
         <label>
           Cím

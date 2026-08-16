@@ -5,6 +5,7 @@ import { asyncHandler } from "../lib/asyncHandler";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { JobRequestStatus, QuoteStatus, Role, VerificationStatus } from "../generated/prisma/client";
 import { paramId } from "../lib/params";
+import { notify } from "../lib/notifications";
 
 export const quotesRouter = Router();
 
@@ -55,6 +56,14 @@ quotesRouter.post(
       },
     });
 
+    await notify({
+      userId: jobRequest.customerId,
+      type: "NEW_QUOTE",
+      title: "Új árajánlat érkezett",
+      body: `${body.price} Ft`,
+      jobRequestId: jobRequest.id,
+    });
+
     res.status(201).json(quote);
   })
 );
@@ -67,7 +76,10 @@ quotesRouter.post(
   requireRole(Role.CUSTOMER),
   asyncHandler(async (req, res) => {
     const quoteId = paramId(req, "id");
-    const quote = await prisma.quote.findUnique({ where: { id: quoteId }, include: { jobRequest: true } });
+    const quote = await prisma.quote.findUnique({
+      where: { id: quoteId },
+      include: { jobRequest: true, provider: true },
+    });
     if (!quote || quote.jobRequest.customerId !== req.auth!.userId) {
       return res.status(404).json({ error: "Quote not found" });
     }
@@ -99,6 +111,15 @@ quotesRouter.post(
             scheduledAt: quote.proposedStartAt,
           },
         });
+      });
+
+      await notify({
+        userId: quote.provider.userId,
+        type: "QUOTE_ACCEPTED",
+        title: "Elfogadták az árajánlatod!",
+        body: `${quote.price} Ft`,
+        jobRequestId: quote.jobRequestId,
+        bookingId: booking.id,
       });
 
       res.status(201).json(booking);

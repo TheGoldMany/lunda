@@ -62,6 +62,15 @@ enum PaymentMethod {
   CARD_MOCK
 }
 
+enum NotificationType {
+  JOB_ACCEPTED
+  NEW_QUOTE
+  QUOTE_ACCEPTED
+  PAYMENT_DUE
+  PAYMENT_RECEIVED
+  VERIFICATION_DECIDED
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -77,6 +86,7 @@ model User {
   reviewsWritten  Review[]         @relation("ReviewsWritten")
   reviewsReceived Review[]         @relation("ReviewsReceived")
   messagesSent    Message[]        @relation("MessagesSent")
+  notifications   Notification[]
 }
 
 model ServiceProvider {
@@ -197,4 +207,21 @@ model Review {
   createdAt   DateTime @default(now())
 
   @@unique([bookingId, reviewerId])
+}
+
+// Practical stand-in for real push notifications (which would need a
+// service worker + push service) — an in-app, polled notification feed.
+model Notification {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation(fields: [userId], references: [id])
+  type         NotificationType
+  title        String
+  body         String?
+  jobRequestId String?
+  bookingId    String?
+  read         Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+
+  @@index([userId, read])
 }

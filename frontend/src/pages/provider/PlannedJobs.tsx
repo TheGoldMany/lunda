@@ -83,6 +83,7 @@ export function PlannedJobsPage() {
         {jobs?.map((jr) => (
           <li key={jr.id} className="list-item column">
             <div className="row-between full-width">
+              {jr.photoUrl && <img className="job-photo-thumb" src={jr.photoUrl} alt="" />}
               <div className="list-item-body">
                 <strong>
                   <span className="trade-icon">{TRADE_ICONS[jr.trade]}</span> {TRADE_LABELS[jr.trade]}

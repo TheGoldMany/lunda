@@ -5,6 +5,7 @@ import { asyncHandler } from "../lib/asyncHandler";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { Role, Trade, VerificationStatus } from "../generated/prisma/client";
 import { paramId } from "../lib/params";
+import { notify } from "../lib/notifications";
 
 export const providersRouter = Router();
 
@@ -63,6 +64,25 @@ providersRouter.get(
   })
 );
 
+const availabilitySchema = z.object({ isAvailable: z.boolean() });
+
+// Provider toggles whether they currently show up in urgent-flow search
+// results. Deliberately separate from the onboarding POST /me, which resets
+// verification to PENDING — flipping availability shouldn't do that.
+providersRouter.patch(
+  "/me/availability",
+  requireAuth,
+  requireRole(Role.PROVIDER),
+  asyncHandler(async (req, res) => {
+    const body = availabilitySchema.parse(req.body);
+    const provider = await prisma.serviceProvider.update({
+      where: { userId: req.auth!.userId },
+      data: { isAvailable: body.isAvailable },
+    });
+    res.json(provider);
+  })
+);
+
 // Admin: verification queue.
 providersRouter.get(
   "/pending",
@@ -92,6 +112,20 @@ providersRouter.patch(
       where: { id: paramId(req, "id") },
       data: { verificationStatus: body.status },
     });
+
+    await notify({
+      userId: provider.userId,
+      type: "VERIFICATION_DECIDED",
+      title:
+        body.status === VerificationStatus.APPROVED
+          ? "Jóváhagyták a profilod!"
+          : "A profilodat elutasították",
+      body:
+        body.status === VerificationStatus.APPROVED
+          ? "Mostantól megjelensz a találatok között."
+          : "Ellenőrizd a beküldött adatokat, és próbáld újra.",
+    });
+
     res.json(provider);
   })
 );

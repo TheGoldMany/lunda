@@ -9,12 +9,15 @@ import { reviewsRouter } from "./routes/reviews";
 import { quotesRouter } from "./routes/quotes";
 import { paymentsRouter } from "./routes/payments";
 import { messagesRouter } from "./routes/messages";
+import { notificationsRouter } from "./routes/notifications";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+// Raised from Express's 100kb default so a compressed job-photo data URL fits
+// in a single request (no external file storage is wired up in this build).
+app.use(express.json({ limit: "8mb" }));
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
@@ -26,6 +29,7 @@ app.use("/reviews", reviewsRouter);
 app.use("/quotes", quotesRouter);
 app.use("/payments", paymentsRouter);
 app.use("/bookings", messagesRouter);
+app.use("/notifications", notificationsRouter);
 
 app.use(errorHandler);
 

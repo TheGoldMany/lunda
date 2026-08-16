@@ -112,6 +112,26 @@ export interface Quote {
   provider?: ServiceProviderProfile;
 }
 
+export type NotificationType =
+  | "JOB_ACCEPTED"
+  | "NEW_QUOTE"
+  | "QUOTE_ACCEPTED"
+  | "PAYMENT_DUE"
+  | "PAYMENT_RECEIVED"
+  | "VERIFICATION_DECIDED";
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string | null;
+  jobRequestId: string | null;
+  bookingId: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
 export interface Message {
   id: string;
   bookingId: string;

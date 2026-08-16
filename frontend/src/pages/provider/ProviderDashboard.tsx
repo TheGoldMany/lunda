@@ -48,9 +48,33 @@ export function ProviderDashboardPage() {
     }
   }
 
+  async function handleToggleAvailability() {
+    if (!profile) return;
+    const next = !profile.isAvailable;
+    setProfile({ ...profile, isAvailable: next });
+    try {
+      await api.patch("/providers/me/availability", { isAvailable: next });
+      showToast(next ? "Most elérhető vagy az új munkákra." : "Elrejtve az új munkák elől.");
+    } catch (err) {
+      setProfile(profile);
+      setError(err instanceof ApiError ? err.message : "Nem sikerült frissíteni az elérhetőséget");
+    }
+  }
+
   return (
     <div className="card">
-      <h1>Munkák</h1>
+      <div className="row-between">
+        <h1>Munkák</h1>
+        {profile && (
+          <label className="availability-toggle">
+            <input type="checkbox" checked={profile.isAvailable} onChange={handleToggleAvailability} />
+            <span className="toggle-track">
+              <span className="toggle-thumb" />
+            </span>
+            {profile.isAvailable ? "Elérhető vagyok" : "Nem vagyok elérhető"}
+          </label>
+        )}
+      </div>
       {error && <p className="error">{error}</p>}
 
       <section>
@@ -99,7 +123,11 @@ export function ProviderDashboardPage() {
         <ul className="list">
           {incoming?.map((jr) => (
             <li key={jr.id} className="list-item">
-              <span className="trade-icon">{TRADE_ICONS[jr.trade]}</span>
+              {jr.photoUrl ? (
+                <img className="job-photo-thumb" src={jr.photoUrl} alt="" />
+              ) : (
+                <span className="trade-icon">{TRADE_ICONS[jr.trade]}</span>
+              )}
               <div className="list-item-body">
                 <strong>{TRADE_LABELS[jr.trade]}</strong>
                 <span className="muted">{jr.description}</span>

@@ -72,6 +72,7 @@ export function JobRequestDetailPage() {
         </span>
       </div>
       <p>{jobRequest.description}</p>
+      {jobRequest.photoUrl && <img className="job-photo" src={jobRequest.photoUrl} alt="A probléma fotója" />}
       <p className="muted">{jobRequest.address}</p>
       {jobRequest.urgency === "PLANNED" && jobRequest.preferredStartAt && jobRequest.preferredEndAt && (
         <p className="muted">
