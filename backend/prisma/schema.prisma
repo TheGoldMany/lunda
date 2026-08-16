@@ -1,0 +1,129 @@
+// Core data model for the urgent-job slice of the service marketplace concept.
+// See docs/concept/ for the full DEV/DESIGN source material.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+enum Trade {
+  WATER
+  GAS
+  ELECTRICITY
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Urgency {
+  URGENT
+  PLANNED
+}
+
+enum JobRequestStatus {
+  OPEN
+  BOOKED
+  CANCELLED
+}
+
+enum BookingStatus {
+  BOOKED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String   @unique
+  email        String?  @unique
+  passwordHash String
+  role         Role
+  city         String
+  createdAt    DateTime @default(now())
+
+  serviceProvider ServiceProvider?
+  jobRequests     JobRequest[]     @relation("CustomerJobRequests")
+  reviewsWritten  Review[]         @relation("ReviewsWritten")
+  reviewsReceived Review[]         @relation("ReviewsReceived")
+}
+
+model ServiceProvider {
+  id                  String              @id @default(cuid())
+  userId              String              @unique
+  user                User                @relation(fields: [userId], references: [id])
+  trades              Trade[]
+  calloutFee          Decimal             @db.Decimal(10, 2)
+  hourlyRate          Decimal             @db.Decimal(10, 2)
+  licenseDocumentUrl  String?
+  verificationStatus  VerificationStatus  @default(PENDING)
+  isAvailable         Boolean             @default(true)
+  latitude            Float
+  longitude           Float
+  ratingAvg           Float?
+  createdAt           DateTime            @default(now())
+
+  bookings Booking[]
+}
+
+model JobRequest {
+  id          String            @id @default(cuid())
+  customerId  String
+  customer    User              @relation("CustomerJobRequests", fields: [customerId], references: [id])
+  trade       Trade
+  description String
+  photoUrl    String?
+  address     String
+  latitude    Float
+  longitude   Float
+  urgency     Urgency
+  status      JobRequestStatus  @default(OPEN)
+  createdAt   DateTime          @default(now())
+
+  booking Booking?
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  jobRequestId  String        @unique
+  jobRequest    JobRequest    @relation(fields: [jobRequestId], references: [id])
+  providerId    String
+  provider      ServiceProvider @relation(fields: [providerId], references: [id])
+  status        BookingStatus @default(BOOKED)
+  finalPrice    Decimal?      @db.Decimal(10, 2)
+  createdAt     DateTime      @default(now())
+  completedAt   DateTime?
+
+  reviews Review[]
+}
+
+// Reviews are bidirectional: the customer rates the provider and the
+// provider rates the customer, so each booking can have up to two reviews.
+model Review {
+  id          String   @id @default(cuid())
+  bookingId   String
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+  reviewerId  String
+  reviewer    User     @relation("ReviewsWritten", fields: [reviewerId], references: [id])
+  revieweeId  String
+  reviewee    User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  score       Int
+  text        String?
+  createdAt   DateTime @default(now())
+
+  @@unique([bookingId, reviewerId])
+}
