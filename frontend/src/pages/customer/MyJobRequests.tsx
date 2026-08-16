@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../api/client";
 import type { JobRequest } from "../../api/types";
-import { JOB_STATUS_LABELS, TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
+import { JOB_STATUS_LABELS, TRADE_LABELS } from "../../lib/labels";
 import { ListSkeleton } from "../../components/Skeleton";
+import { TradeBadge } from "../../lib/icons";
 
 export function MyJobRequestsPage() {
   const [requests, setRequests] = useState<JobRequest[] | null>(null);
@@ -29,7 +30,7 @@ export function MyJobRequestsPage() {
               {r.photoUrl ? (
                 <img className="job-photo-thumb" src={r.photoUrl} alt="" />
               ) : (
-                <span className="trade-icon">{TRADE_ICONS[r.trade]}</span>
+                <TradeBadge trade={r.trade} />
               )}
               <div className="list-item-body">
                 <strong>{TRADE_LABELS[r.trade]}</strong>

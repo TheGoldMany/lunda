@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { api, ApiError } from "../api/client";
+import { Star, CheckCircle2 } from "../lib/icons";
 
 export function ReviewForm({ bookingId, revieweeLabel }: { bookingId: string; revieweeLabel: string }) {
   const [score, setScore] = useState(5);
@@ -26,7 +27,12 @@ export function ReviewForm({ bookingId, revieweeLabel }: { bookingId: string; re
     }
   }
 
-  if (submitted) return <p className="success">Köszönjük az értékelést!</p>;
+  if (submitted)
+    return (
+      <p className="success">
+        <CheckCircle2 size={16} strokeWidth={2} /> Köszönjük az értékelést!
+      </p>
+    );
 
   return (
     <form onSubmit={handleSubmit} className="form">
@@ -40,7 +46,7 @@ export function ReviewForm({ bookingId, revieweeLabel }: { bookingId: string; re
             onClick={() => setScore(n)}
             aria-label={`${n} pont`}
           >
-            ★
+            <Star size={22} strokeWidth={1.5} fill={n <= score ? "currentColor" : "none"} />
           </button>
         ))}
       </div>

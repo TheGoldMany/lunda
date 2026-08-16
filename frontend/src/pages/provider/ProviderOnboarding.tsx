@@ -1,7 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, ApiError } from "../../api/client";
 import type { ServiceProviderProfile, Trade } from "../../api/types";
-import { TRADE_ICONS, TRADE_LABELS, VERIFICATION_LABELS } from "../../lib/labels";
+import { TRADE_LABELS, VERIFICATION_LABELS } from "../../lib/labels";
+import { TradeIcon } from "../../lib/icons";
 
 const BUDAPEST_CENTER = { latitude: 47.4979, longitude: 19.0402 };
 const TRADES: Trade[] = ["WATER", "GAS", "ELECTRICITY"];
@@ -82,7 +83,7 @@ export function ProviderOnboardingPage() {
               className={`trade-option ${trades.includes(t) ? "selected" : ""}`}
               onClick={() => toggleTrade(t)}
             >
-              <span className="trade-icon">{TRADE_ICONS[t]}</span>
+              <TradeIcon trade={t} size={22} strokeWidth={1.75} />
               {TRADE_LABELS[t]}
             </button>
           ))}

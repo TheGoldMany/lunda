@@ -1,7 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
-import type { AppNotification, Role } from "../api/types";
+import type { AppNotification, NotificationType, Role } from "../api/types";
+import { Bell, CheckCircle2, Receipt, Wallet, ShieldCheck, type LucideIcon } from "lucide-react";
+
+const NOTIFICATION_ICON: Record<NotificationType, LucideIcon> = {
+  JOB_ACCEPTED: CheckCircle2,
+  NEW_QUOTE: Receipt,
+  QUOTE_ACCEPTED: CheckCircle2,
+  PAYMENT_DUE: Wallet,
+  PAYMENT_RECEIVED: Wallet,
+  VERIFICATION_DECIDED: ShieldCheck,
+};
 
 function relativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -68,7 +78,7 @@ export function NotificationBell({ role }: { role: Role }) {
   return (
     <div className="notification-bell" ref={containerRef}>
       <button type="button" className="bell-button" onClick={() => setOpen((o) => !o)} aria-label="Értesítések">
-        🔔
+        <Bell size={19} strokeWidth={1.75} />
         {unreadCount > 0 && <span className="bell-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
       </button>
       {open && (
@@ -83,19 +93,27 @@ export function NotificationBell({ role }: { role: Role }) {
           </div>
           {notifications.length === 0 && <p className="muted notification-empty">Nincs még értesítésed.</p>}
           <ul className="notification-list">
-            {notifications.map((n) => (
-              <li key={n.id}>
-                <button
-                  type="button"
-                  className={`notification-item ${n.read ? "" : "unread"}`}
-                  onClick={() => handleSelect(n)}
-                >
-                  <span className="notification-title">{n.title}</span>
-                  {n.body && <span className="muted">{n.body}</span>}
-                  <span className="notification-time">{relativeTime(n.createdAt)}</span>
-                </button>
-              </li>
-            ))}
+            {notifications.map((n) => {
+              const Icon = NOTIFICATION_ICON[n.type];
+              return (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    className={`notification-item ${n.read ? "" : "unread"}`}
+                    onClick={() => handleSelect(n)}
+                  >
+                    <span className="notification-icon">
+                      <Icon size={16} strokeWidth={2} />
+                    </span>
+                    <span className="notification-text">
+                      <span className="notification-title">{n.title}</span>
+                      {n.body && <span className="muted">{n.body}</span>}
+                      <span className="notification-time">{relativeTime(n.createdAt)}</span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

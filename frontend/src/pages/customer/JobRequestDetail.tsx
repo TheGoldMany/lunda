@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import type { Booking, JobRequest, Quote, RankedProvider } from "../../api/types";
-import { BOOKING_STATUS_LABELS, JOB_STATUS_LABELS, TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
+import { BOOKING_STATUS_LABELS, JOB_STATUS_LABELS, TRADE_LABELS } from "../../lib/labels";
 import { ReviewForm } from "../../components/ReviewForm";
 import { Chat } from "../../components/Chat";
 import { PaymentBox } from "../../components/PaymentBox";
 import { MapView, type MapMarkerSpec } from "../../components/MapView";
 import { ListSkeleton } from "../../components/Skeleton";
 import { useToast } from "../../components/Toast";
+import { TradeBadge, RatingBadge, tradePinIcon } from "../../lib/icons";
 
 export function JobRequestDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -65,7 +66,7 @@ export function JobRequestDetailPage() {
     <div className="card">
       <div className="row-between">
         <h1>
-          <span className="trade-icon">{TRADE_ICONS[jobRequest.trade]}</span> {TRADE_LABELS[jobRequest.trade]}
+          <TradeBadge trade={jobRequest.trade} size={22} /> {TRADE_LABELS[jobRequest.trade]}
         </h1>
         <span className={`badge status-${jobRequest.status.toLowerCase()}`}>
           {JOB_STATUS_LABELS[jobRequest.status]}
@@ -98,7 +99,7 @@ export function JobRequestDetailPage() {
                   id: "job",
                   latitude: jobRequest.latitude,
                   longitude: jobRequest.longitude,
-                  emoji: "🏠",
+                  icon: "home",
                   label: "A munka helyszíne",
                   variant: "primary",
                 },
@@ -106,14 +107,14 @@ export function JobRequestDetailPage() {
                   id: p.id,
                   latitude: p.latitude,
                   longitude: p.longitude,
-                  emoji: TRADE_ICONS[jobRequest.trade],
+                  icon: tradePinIcon(jobRequest.trade),
                   label: p.providerName,
                   popup: (
                     <div className="map-popup">
                       <strong>{p.providerName}</strong>
                       {p.distanceKm} km · kb. {p.estimatedArrivalMinutes} perc
                       <br />
-                      {p.ratingAvg ? `${p.ratingAvg.toFixed(1)} ★` : "Nincs értékelés"} · ~{p.calloutFee} Ft
+                      <RatingBadge value={p.ratingAvg} /> · ~{p.calloutFee} Ft
                     </div>
                   ),
                 })),
@@ -126,8 +127,7 @@ export function JobRequestDetailPage() {
                 <div className="list-item-body">
                   <strong>{p.providerName}</strong>
                   <span className="muted">
-                    {p.distanceKm} km · kb. {p.estimatedArrivalMinutes} perc ·{" "}
-                    {p.ratingAvg ? `${p.ratingAvg.toFixed(1)} ★` : "Nincs értékelés"}
+                    {p.distanceKm} km · kb. {p.estimatedArrivalMinutes} perc · <RatingBadge value={p.ratingAvg} />
                   </span>
                 </div>
                 <span className="muted">~{p.calloutFee} Ft kiszállás</span>
@@ -156,7 +156,7 @@ export function JobRequestDetailPage() {
                   id: "job",
                   latitude: jobRequest.latitude,
                   longitude: jobRequest.longitude,
-                  emoji: "🏠",
+                  icon: "home",
                   label: "A munka helyszíne",
                   variant: "primary",
                 },
@@ -166,7 +166,7 @@ export function JobRequestDetailPage() {
                     id: q.id,
                     latitude: q.provider!.latitude,
                     longitude: q.provider!.longitude,
-                    emoji: TRADE_ICONS[jobRequest.trade],
+                    icon: tradePinIcon(jobRequest.trade),
                     label: q.provider!.user?.name ?? "Szolgáltató",
                     popup: (
                       <div className="map-popup">
@@ -186,8 +186,7 @@ export function JobRequestDetailPage() {
                   <span>{q.price} Ft</span>
                 </div>
                 <span className="muted">
-                  kb. {Math.round(q.estimatedDurationMinutes / 60)} óra ·{" "}
-                  {q.provider?.ratingAvg ? `${q.provider.ratingAvg.toFixed(1)} ★` : "Nincs értékelés"}
+                  kb. {Math.round(q.estimatedDurationMinutes / 60)} óra · <RatingBadge value={q.provider?.ratingAvg ?? null} />
                   {q.proposedStartAt && ` · javasolt időpont: ${new Date(q.proposedStartAt).toLocaleString("hu-HU")}`}
                 </span>
                 {q.message && <p className="muted">"{q.message}"</p>}
@@ -223,7 +222,7 @@ export function JobRequestDetailPage() {
                 id: "job",
                 latitude: jobRequest.latitude,
                 longitude: jobRequest.longitude,
-                emoji: TRADE_ICONS[jobRequest.trade],
+                icon: tradePinIcon(jobRequest.trade),
                 label: jobRequest.address,
                 variant: "primary",
               },

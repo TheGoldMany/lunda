@@ -1,10 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, ApiError } from "../../api/client";
 import type { PlannedJobRequest, ServiceProviderProfile } from "../../api/types";
-import { TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
+import { TRADE_LABELS } from "../../lib/labels";
 import { MapView, type MapMarkerSpec } from "../../components/MapView";
 import { ListSkeleton } from "../../components/Skeleton";
 import { useToast } from "../../components/Toast";
+import { TradeBadge, tradePinIcon } from "../../lib/icons";
 
 function defaultValidUntil(): string {
   const d = new Date();
@@ -49,7 +50,7 @@ export function PlannedJobsPage() {
                     id: "me",
                     latitude: profile.latitude,
                     longitude: profile.longitude,
-                    emoji: "🔧",
+                    icon: "provider" as const,
                     label: "Én",
                     variant: "primary" as const,
                   },
@@ -59,7 +60,7 @@ export function PlannedJobsPage() {
               id: jr.id,
               latitude: jr.latitude,
               longitude: jr.longitude,
-              emoji: TRADE_ICONS[jr.trade],
+              icon: tradePinIcon(jr.trade),
               label: jr.customer.name,
               popup: (
                 <div className="map-popup">
@@ -86,7 +87,7 @@ export function PlannedJobsPage() {
               {jr.photoUrl && <img className="job-photo-thumb" src={jr.photoUrl} alt="" />}
               <div className="list-item-body">
                 <strong>
-                  <span className="trade-icon">{TRADE_ICONS[jr.trade]}</span> {TRADE_LABELS[jr.trade]}
+                  <TradeBadge trade={jr.trade} /> {TRADE_LABELS[jr.trade]}
                 </strong>
                 <span className="muted">{jr.description}</span>
                 <span className="muted">

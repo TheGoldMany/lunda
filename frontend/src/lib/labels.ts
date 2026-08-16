@@ -6,12 +6,6 @@ export const TRADE_LABELS: Record<Trade, string> = {
   ELECTRICITY: "Villanyszerelés",
 };
 
-export const TRADE_ICONS: Record<Trade, string> = {
-  WATER: "💧",
-  GAS: "🔥",
-  ELECTRICITY: "⚡",
-};
-
 export const JOB_STATUS_LABELS: Record<JobRequestStatus, string> = {
   OPEN: "Keresünk szakembert",
   BOOKED: "Lefoglalva",

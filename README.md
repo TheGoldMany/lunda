@@ -13,6 +13,7 @@ Ez a build a koncepció mindkét fő flow-ját végigviszi:
 - **Szolgáltatói elérhetőség-kapcsoló**: a szolgáltató egy érintéssel jelezheti, hogy jelenleg nem vállal új munkát — ilyenkor kimarad a sürgős flow rangsorolt találatai közül.
 - **Fotó a munka feladásakor**: kliens-oldali tömörítés, nincs külső fájltároló — a kép `data:` URL-ként landol a meglévő `photoUrl` mezőben.
 - **Értesítési harang**: olvasatlan-jelvény + lenyíló lista a fontosabb eseményekhez (elfogadott munka, új ajánlat, fizetendő/befizetett összeg, verifikációs döntés) — gyakorlati helyettesítője a valódi böngésző-push-nak ebben a fázisban.
+- **Vizuális rendszer**: emoji helyett [Lucide](https://lucide.dev) SVG-ikonok mindenhol (beleértve a térképjelölőket is), önhosztolt Inter betűtípus, indigó-alapú "high-tech enterprise" paletta finom animációkkal (kártya-belépés, hover-lift, sötét chrome toast). Részletek: `docs/concept/design.md` 5. köre.
 
 Amit ez a build *nem* tartalmaz (valódi fizetési gateway, valódi böngésző-push, videó feltöltés, élő GPS-nyomkövetés, cím-alapú geokódolás) az a `docs/concept/dev.md` és `docs/concept/design.md` alján van felsorolva, iterációnkénti bontásban.
 

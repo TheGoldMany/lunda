@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../../api/client";
 import type { ServiceProviderProfile } from "../../api/types";
-import { TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
+import { TRADE_LABELS } from "../../lib/labels";
 import { ListSkeleton } from "../../components/Skeleton";
 import { useToast } from "../../components/Toast";
+import { TradeBadge } from "../../lib/icons";
 
 export function AdminVerificationsPage() {
   const { showToast } = useToast();
@@ -46,7 +47,13 @@ export function AdminVerificationsPage() {
               <div className="list-item-body">
                 <strong>{p.user?.name}</strong>
                 <span className="muted">{p.user?.phone}</span>
-                <span className="muted">{p.trades.map((t) => `${TRADE_ICONS[t]} ${TRADE_LABELS[t]}`).join(", ")}</span>
+                <span className="trade-tag-row">
+                  {p.trades.map((t) => (
+                    <span key={t} className="trade-tag">
+                      <TradeBadge trade={t} size={14} /> {TRADE_LABELS[t]}
+                    </span>
+                  ))}
+                </span>
                 {p.licenseDocumentUrl && (
                   <a href={p.licenseDocumentUrl} target="_blank" rel="noreferrer">
                     Dokumentum megtekintése

@@ -2,9 +2,10 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { api, ApiError } from "../../api/client";
 import type { JobRequest, Trade, Urgency } from "../../api/types";
-import { TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
+import { TRADE_LABELS } from "../../lib/labels";
 import { MapView } from "../../components/MapView";
 import { compressImageToDataUrl } from "../../lib/image";
+import { TradeIcon, LocateFixed, Camera, X } from "../../lib/icons";
 
 const BUDAPEST_CENTER = { latitude: 47.4979, longitude: 19.0402 };
 const TRADES: Trade[] = ["WATER", "GAS", "ELECTRICITY"];
@@ -131,7 +132,7 @@ export function NewJobRequestPage() {
               className={`trade-option ${trade === t ? "selected" : ""}`}
               onClick={() => setTrade(t)}
             >
-              <span className="trade-icon">{TRADE_ICONS[t]}</span>
+              <TradeIcon trade={t} size={22} strokeWidth={1.75} />
               {TRADE_LABELS[t]}
             </button>
           ))}
@@ -157,14 +158,22 @@ export function NewJobRequestPage() {
           {photoUrl ? (
             <div className="photo-preview">
               <img src={photoUrl} alt="Feltöltött fotó előnézete" />
-              <button type="button" className="link-button" onClick={() => setPhotoUrl(null)}>
-                Eltávolítás
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => setPhotoUrl(null)}
+                aria-label="Fotó eltávolítása"
+              >
+                <X size={16} strokeWidth={2} />
               </button>
             </div>
           ) : (
-            <input type="file" accept="image/*" onChange={handlePhotoChange} disabled={processingPhoto} />
+            <label className={`upload-dropzone ${processingPhoto ? "disabled" : ""}`}>
+              <Camera size={20} strokeWidth={1.75} />
+              <span>{processingPhoto ? "Feldolgozás..." : "Fotó feltöltése"}</span>
+              <input type="file" accept="image/*" onChange={handlePhotoChange} disabled={processingPhoto} hidden />
+            </label>
           )}
-          {processingPhoto && <p className="map-hint">Kép feldolgozása...</p>}
           {photoError && <p className="error">{photoError}</p>}
         </div>
 
@@ -199,8 +208,9 @@ export function NewJobRequestPage() {
         <div>
           <div className="row-between">
             <label>Pontos helyszín a térképen</label>
-            <button type="button" className="link-button" onClick={locateMe} disabled={locating}>
-              {locating ? "Keresés..." : "📍 Saját helyzetem"}
+            <button type="button" className="link-button icon-label-button" onClick={locateMe} disabled={locating}>
+              <LocateFixed size={14} strokeWidth={2} />
+              {locating ? "Keresés..." : "Saját helyzetem"}
             </button>
           </div>
           <MapView

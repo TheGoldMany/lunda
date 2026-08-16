@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../../api/client";
 import type { Booking, IncomingJobRequest, ServiceProviderProfile } from "../../api/types";
-import { BOOKING_STATUS_LABELS, TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
+import { BOOKING_STATUS_LABELS, TRADE_LABELS } from "../../lib/labels";
 import { ReviewForm } from "../../components/ReviewForm";
 import { Chat } from "../../components/Chat";
 import { PaymentBox } from "../../components/PaymentBox";
 import { MapView, type MapMarkerSpec } from "../../components/MapView";
 import { ListSkeleton } from "../../components/Skeleton";
 import { useToast } from "../../components/Toast";
+import { TradeBadge, tradePinIcon } from "../../lib/icons";
 
 export function ProviderDashboardPage() {
   const { showToast } = useToast();
@@ -92,7 +93,7 @@ export function ProviderDashboardPage() {
                       id: "me",
                       latitude: profile.latitude,
                       longitude: profile.longitude,
-                      emoji: "🔧",
+                      icon: "provider" as const,
                       label: "Én",
                       variant: "primary" as const,
                     },
@@ -102,7 +103,7 @@ export function ProviderDashboardPage() {
                 id: jr.id,
                 latitude: jr.latitude,
                 longitude: jr.longitude,
-                emoji: TRADE_ICONS[jr.trade],
+                icon: tradePinIcon(jr.trade),
                 label: jr.customer.name,
                 popup: (
                   <div className="map-popup">
@@ -126,7 +127,7 @@ export function ProviderDashboardPage() {
               {jr.photoUrl ? (
                 <img className="job-photo-thumb" src={jr.photoUrl} alt="" />
               ) : (
-                <span className="trade-icon">{TRADE_ICONS[jr.trade]}</span>
+                <TradeBadge trade={jr.trade} />
               )}
               <div className="list-item-body">
                 <strong>{TRADE_LABELS[jr.trade]}</strong>
@@ -200,7 +201,7 @@ function BookingRow({ booking, onChanged }: { booking: Booking; onChanged: () =>
               id: "job",
               latitude: booking.jobRequest.latitude,
               longitude: booking.jobRequest.longitude,
-              emoji: TRADE_ICONS[booking.jobRequest.trade],
+              icon: tradePinIcon(booking.jobRequest.trade),
               label: booking.jobRequest.address,
               variant: "primary",
             },
