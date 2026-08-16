@@ -3,6 +3,8 @@ import { api, ApiError } from "../../api/client";
 import type { Booking, IncomingJobRequest } from "../../api/types";
 import { BOOKING_STATUS_LABELS, TRADE_ICONS, TRADE_LABELS } from "../../lib/labels";
 import { ReviewForm } from "../../components/ReviewForm";
+import { Chat } from "../../components/Chat";
+import { PaymentBox } from "../../components/PaymentBox";
 
 export function ProviderDashboardPage() {
   const [incoming, setIncoming] = useState<IncomingJobRequest[] | null>(null);
@@ -104,9 +106,14 @@ function BookingRow({ booking, onChanged }: { booking: Booking; onChanged: () =>
           <strong>{booking.jobRequest ? TRADE_LABELS[booking.jobRequest.trade] : ""}</strong>
           <span className="muted">{booking.jobRequest?.customer?.name}</span>
           <span className="muted">{booking.jobRequest?.address}</span>
+          {booking.scheduledAt && (
+            <span className="muted">Egyeztetett időpont: {new Date(booking.scheduledAt).toLocaleString("hu-HU")}</span>
+          )}
         </div>
         <span className={`badge status-${booking.status.toLowerCase()}`}>{BOOKING_STATUS_LABELS[booking.status]}</span>
       </div>
+
+      <Chat bookingId={booking.id} />
 
       {booking.status === "BOOKED" && (
         <div className="row complete-row">
@@ -124,7 +131,9 @@ function BookingRow({ booking, onChanged }: { booking: Booking; onChanged: () =>
       )}
       {error && <p className="error">{error}</p>}
 
-      {booking.status === "COMPLETED" && (
+      {booking.payment && <PaymentBox payment={booking.payment} canPay={false} onPaid={onChanged} />}
+
+      {booking.status === "COMPLETED" && booking.payment?.status === "PAID" && (
         <ReviewForm bookingId={booking.id} revieweeLabel={booking.jobRequest?.customer?.name ?? "a megrendelő"} />
       )}
     </li>

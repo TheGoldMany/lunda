@@ -9,6 +9,7 @@ import { MyJobRequestsPage } from "./pages/customer/MyJobRequests";
 import { JobRequestDetailPage } from "./pages/customer/JobRequestDetail";
 import { ProviderOnboardingPage } from "./pages/provider/ProviderOnboarding";
 import { ProviderDashboardPage } from "./pages/provider/ProviderDashboard";
+import { PlannedJobsPage } from "./pages/provider/PlannedJobs";
 import { AdminVerificationsPage } from "./pages/admin/AdminVerifications";
 import { roleHome } from "./lib/roleHome";
 
@@ -72,6 +73,15 @@ function App() {
           element={
             <ProtectedRoute roles={["PROVIDER"]}>
               <ProviderDashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/provider/planned"
+          element={
+            <ProtectedRoute roles={["PROVIDER"]}>
+              <PlannedJobsPage />
             </ProtectedRoute>
           }
         />

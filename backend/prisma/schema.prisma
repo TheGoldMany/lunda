@@ -46,6 +46,22 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum QuoteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+enum PaymentMethod {
+  CARD_MOCK
+}
+
 model User {
   id           String   @id @default(cuid())
   name         String
@@ -60,6 +76,7 @@ model User {
   jobRequests     JobRequest[]     @relation("CustomerJobRequests")
   reviewsWritten  Review[]         @relation("ReviewsWritten")
   reviewsReceived Review[]         @relation("ReviewsReceived")
+  messagesSent    Message[]        @relation("MessagesSent")
 }
 
 model ServiceProvider {
@@ -78,23 +95,47 @@ model ServiceProvider {
   createdAt           DateTime            @default(now())
 
   bookings Booking[]
+  quotes   Quote[]
 }
 
 model JobRequest {
-  id          String            @id @default(cuid())
-  customerId  String
-  customer    User              @relation("CustomerJobRequests", fields: [customerId], references: [id])
-  trade       Trade
-  description String
-  photoUrl    String?
-  address     String
-  latitude    Float
-  longitude   Float
-  urgency     Urgency
-  status      JobRequestStatus  @default(OPEN)
-  createdAt   DateTime          @default(now())
+  id              String            @id @default(cuid())
+  customerId      String
+  customer        User              @relation("CustomerJobRequests", fields: [customerId], references: [id])
+  trade           Trade
+  description     String
+  photoUrl        String?
+  address         String
+  latitude        Float
+  longitude       Float
+  urgency         Urgency
+  // Only set for PLANNED requests: the window the customer wants the work done in.
+  preferredStartAt DateTime?
+  preferredEndAt   DateTime?
+  status          JobRequestStatus  @default(OPEN)
+  createdAt       DateTime          @default(now())
 
   booking Booking?
+  quotes  Quote[]
+}
+
+// Only created in the PLANNED flow: a provider's offer against a JobRequest.
+// The customer compares quotes from multiple providers before accepting one.
+model Quote {
+  id                      String      @id @default(cuid())
+  jobRequestId            String
+  jobRequest              JobRequest  @relation(fields: [jobRequestId], references: [id])
+  providerId              String
+  provider                ServiceProvider @relation(fields: [providerId], references: [id])
+  price                   Decimal     @db.Decimal(10, 2)
+  estimatedDurationMinutes Int
+  message                 String?
+  proposedStartAt         DateTime?
+  validUntil              DateTime
+  status                  QuoteStatus @default(PENDING)
+  createdAt               DateTime    @default(now())
+
+  @@unique([jobRequestId, providerId])
 }
 
 model Booking {
@@ -104,11 +145,41 @@ model Booking {
   providerId    String
   provider      ServiceProvider @relation(fields: [providerId], references: [id])
   status        BookingStatus @default(BOOKED)
+  // Agreed appointment time for the planned flow; null for urgent bookings
+  // (which start as soon as the provider arrives).
+  scheduledAt   DateTime?
   finalPrice    Decimal?      @db.Decimal(10, 2)
   createdAt     DateTime      @default(now())
   completedAt   DateTime?
 
-  reviews Review[]
+  reviews  Review[]
+  messages Message[]
+  payment  Payment?
+}
+
+// Created once a booking is marked complete. Payment is mocked in this
+// build (no real Barion/Stripe integration) — "paying" just flips status.
+model Payment {
+  id                String        @id @default(cuid())
+  bookingId         String        @unique
+  booking           Booking       @relation(fields: [bookingId], references: [id])
+  amount            Decimal       @db.Decimal(10, 2)
+  commissionAmount  Decimal       @db.Decimal(10, 2)
+  method            PaymentMethod @default(CARD_MOCK)
+  status            PaymentStatus @default(PENDING)
+  createdAt         DateTime      @default(now())
+  paidAt            DateTime?
+}
+
+// Simple in-app chat between the customer and provider of a booking.
+model Message {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  senderId  String
+  sender    User     @relation("MessagesSent", fields: [senderId], references: [id])
+  text      String
+  createdAt DateTime @default(now())
 }
 
 // Reviews are bidirectional: the customer rates the provider and the

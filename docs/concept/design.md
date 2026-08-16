@@ -60,10 +60,18 @@ Három szakág (víz, gáz, villany), egy város, mindkét fő flow (sürgős é
 
 ---
 
-## Ebből a build-ből mi készült el (2026-08-16)
+## Ebből a build-ből mi készült el
 
-Az első kódolt szeletben (`frontend/`) a 4.1 megrendelői út valósult meg: szakág-választás ikonokkal, probléma leírása, cím megadása, a legközelebbi verifikált szakemberek listája (távolság, becsült érkezés, irányár, értékelés), foglalás állapotának követése, és a munka után kétirányú csillagos értékelés. A szolgáltatói oldalról a profil/verifikáció-státusz követés, a beérkező munkák listája és a munka lezárása készült el.
+### 1. kör: a sürgős (4.1) megrendelői és szolgáltatói út
 
-**Vizuális nyelv egyelőre**: megbízható-visszafogott irányba tolva (sötétzöld elsődleges szín, letisztult kártyák, jól látható jelvény-szerű állapotcímkék a verifikációhoz/foglalás-státuszhoz) — ez egy kiindulási pont, nem végleges döntés a design csapat 7. pontban feltett kérdésére.
+Szakág-választás ikonokkal, probléma leírása, cím megadása, a legközelebbi verifikált szakemberek listája (távolság, becsült érkezés, irányár, értékelés), foglalás állapotának követése, és a munka után kétirányú csillagos értékelés. A szolgáltatói oldalról a profil/verifikáció-státusz követés, a beérkező munkák listája és a munka lezárása készült el.
 
-**Amit ez a szelet nem tartalmaz**: fotó/videó feltöltés, chat, élő térképes követés, tervezett munka / árajánlat-összehasonlítás, push notification. Ezek a következő iterációk témái.
+### 2. kör: sürgős/tervezett szétválasztás a kezdő képernyőn + tervezett flow + fizetés + chat
+
+- Az "Mikorra kell?" választó ("Most azonnal" vs. "Tervezem, van rá időm") már az új-munka képernyő tetején jelenik meg, pontosan a 7. pontban feltett elvárás szerint — vizuálisan és flow szinten is azonnal elválik a két út.
+- Tervezett munkánál a megrendelő a beérkezett ajánlatokat kártyás listában látja (ár, időtartam, értékelés, üzenet), a legolcsóbb kiemelve — nem táblázat-szerű, összevethető marad anélkül, hogy száraz lenne (5. pont egyik nyitott kérdése).
+- Az árajánlat elfogadása után a foglalás nézet egy egyszerű, buborékos chat-sávot kap (saját üzenet jobbra/zöld, partneré balra/fehér) és egy fizetés-dobozt ("Fizetés (teszt mód)" gomb, majd "Kifizetve" jelzés) — az értékelés-form csak fizetés után jelenik meg.
+
+**Vizuális nyelv egyelőre**: megbízható-visszafogott irányba tolva (sötétzöld elsődleges szín, letisztult kártyák, jól látható jelvény-szerű állapotcímkék a verifikációhoz/foglalás-státuszhoz/fizetéshez) — ez egy kiindulási pont, nem végleges döntés a design csapat 7. pontban feltett kérdésére.
+
+**Amit ez a build nem tartalmaz még**: fotó/videó feltöltés, élő térképes követés, push notification, valódi fizetési gateway. Ezek a következő iterációk témái.

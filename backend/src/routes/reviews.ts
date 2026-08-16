@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { asyncHandler } from "../lib/asyncHandler";
 import { requireAuth } from "../middleware/auth";
-import { BookingStatus } from "../generated/prisma/client";
+import { BookingStatus, PaymentStatus } from "../generated/prisma/client";
 
 export const reviewsRouter = Router();
 
@@ -22,11 +22,14 @@ reviewsRouter.post(
 
     const booking = await prisma.booking.findUnique({
       where: { id: body.bookingId },
-      include: { jobRequest: true, provider: true },
+      include: { jobRequest: true, provider: true, payment: true },
     });
     if (!booking) return res.status(404).json({ error: "Booking not found" });
     if (booking.status !== BookingStatus.COMPLETED) {
       return res.status(400).json({ error: "Booking is not completed yet" });
+    }
+    if (booking.payment?.status !== PaymentStatus.PAID) {
+      return res.status(400).json({ error: "Payment must be completed before leaving a review" });
     }
 
     const userId = req.auth!.userId;

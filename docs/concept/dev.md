@@ -84,20 +84,27 @@ Uber-szerű, kétoldalú piactér-alkalmazás, ahol a fuvar helyett szakipari sz
 
 ---
 
-## Ebből a build-ből mi készült el (2026-08-16)
+## Ebből a build-ből mi készült el
 
-Az alábbi szeletet implementáltuk elsőként: **teljes alap-adatmodell + a 4.1 sürgős munka flow végponttól végpontig**.
+### 1. kör (2026-08-16): alap-adatmodell + sürgős munka flow
 
 - **Backend**: `backend/` — Node.js, TypeScript, Express, Prisma ORM, PostgreSQL, JWT-alapú auth.
 - **Frontend**: `frontend/` — React, TypeScript, Vite, React Router.
-- **Adatmodell**: User, ServiceProvider, JobRequest, Booking, Review (a `Quote` és `Payment` entitások egyelőre nincsenek implementálva — ld. lenti tudatos egyszerűsítéseket).
+- **Adatmodell**: User, ServiceProvider, JobRequest, Booking, Review.
 - **Flow**: regisztráció/bejelentkezés → megrendelő sürgős munkát ad fel → rendszer rangsorolja a legközelebbi verifikált szolgáltatókat (távolság + becsült érkezés + irányár) → szolgáltató elfogadja (race-safe, csak egyvalaki foglalhatja le) → helyszíni munka után szolgáltató rögzíti a végösszeget → kétirányú értékelés.
 - **Admin**: szolgáltató-verifikációs sor jóváhagyással/elutasítással.
 
-### Tudatos egyszerűsítések ebben a szeletben
+### 2. kör (2026-08-16): tervezett munka flow + fizetés (mock) + chat
 
-- **Nincs fizetési integráció** (Barion/Stripe) — a `finalPrice` mezőt a szolgáltató manuálisan rögzíti, jutalék-számítás nincs.
-- **Nincs chat/üzenetküldés** és **push notification** — a megrendelői és szolgáltatói nézetek 5 másodpercenként pollingolnak friss állapotért.
-- **Nincs "tervezett munka" flow** (Quote-összehasonlítás) — csak a sürgős flow készült el.
-- **Az elfogadás egylépéses**: bármelyik illeszkedő szakágú, verifikált és elérhető szolgáltató láthatja és elfogadhatja a nyitott kérést a beérkező-listájában (nincs külön "meghívom ezt a szolgáltatót" lépés) — ez leegyszerűsíti a modellt, miközben megtartja a "ki ér oda leghamarabb" jellegű párosítást.
+- **Adatmodell bővítés**: `Quote` (árajánlat), `Payment` (mockolt fizetés), `Message` (chat); `JobRequest.preferredStartAt/preferredEndAt`, `Booking.scheduledAt`.
+- **4.2 Tervezett munka flow**: megrendelő időablakkal adja fel a munkát → több szolgáltató küld árajánlatot (ár, időtartam, javasolt kezdés, üzenet) → megrendelő összehasonlítja (ár szerint rendezve) és elfogad egyet → Booking jön létre az egyeztetett időpontra, a többi ajánlat elutasítottá válik (race-safe, mint a sürgős flow-nál).
+- **Fizetés**: a munka lezárásakor (`finalPrice` rögzítésekor) automatikusan létrejön egy `Payment` rekord 15%-os jutalékkal; a megrendelő "kifizeti" (mockolt, nincs valódi Barion/Stripe hívás). Az értékelés csak fizetés után adható le — ez követi a koncepcióban leírt sorrendet (végső ár → fizetés → értékelés).
+- **Chat**: a foglaláshoz kötött, egyszerű szöveges üzenetváltás megrendelő és szolgáltató között, mindkét oldali nézetben (5 másodperces pollinggal, mint a többi élő állapot).
+
+### Tudatos egyszerűsítések, amik továbbra is fennállnak
+
+- **Nincs valódi fizetési gateway** (Barion/Stripe) — a "Fizetés" gomb azonnal PAID-re állítja a mockolt Payment rekordot, nincs kártyaadat-kezelés.
+- **Nincs push notification** — minden nézet pollinggal frissül (5–8 mp).
+- **Az elfogadás egylépéses** a sürgős flow-ban: bármelyik illeszkedő szakágú, verifikált és elérhető szolgáltató láthatja és elfogadhatja a nyitott kérést a beérkező-listájában (nincs külön "meghívom ezt a szolgáltatót" lépés).
 - Egyetlen város (Budapest) feltételezve, koordináta-alapú (haversine) távolságszámítással, valós térkép/geokódolás nélkül.
+- Fotó/videó feltöltés még nincs (a `photoUrl` mező csak egy URL-t fogad el, nincs fájlfeltöltő UI).

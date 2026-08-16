@@ -6,6 +6,7 @@ import { requireAuth, requireRole } from "../middleware/auth";
 import { BookingStatus, JobRequestStatus, Role, VerificationStatus } from "../generated/prisma/client";
 import { distanceKm, estimatedArrivalMinutes } from "../lib/geo";
 import { paramId } from "../lib/params";
+import { commissionFor } from "../lib/payment";
 
 export const bookingsRouter = Router();
 
@@ -102,7 +103,10 @@ bookingsRouter.get(
       if (!provider) return res.json([]);
       const bookings = await prisma.booking.findMany({
         where: { providerId: provider.id },
-        include: { jobRequest: { include: { customer: { select: { name: true, phone: true } } } } },
+        include: {
+          jobRequest: { include: { customer: { select: { name: true, phone: true } } } },
+          payment: true,
+        },
         orderBy: { createdAt: "desc" },
       });
       return res.json(bookings);
@@ -110,7 +114,11 @@ bookingsRouter.get(
 
     const bookings = await prisma.booking.findMany({
       where: { jobRequest: { customerId: req.auth!.userId } },
-      include: { jobRequest: true, provider: { include: { user: { select: { name: true, phone: true } } } } },
+      include: {
+        jobRequest: true,
+        provider: { include: { user: { select: { name: true, phone: true } } } },
+        payment: true,
+      },
       orderBy: { createdAt: "desc" },
     });
     res.json(bookings);
@@ -138,11 +146,21 @@ bookingsRouter.patch(
       return res.status(409).json({ error: "Booking already completed" });
     }
 
-    const updated = await prisma.booking.update({
-      where: { id: booking.id },
-      data: { status: BookingStatus.COMPLETED, finalPrice: body.finalPrice, completedAt: new Date() },
+    await prisma.$transaction(async (tx) => {
+      await tx.booking.update({
+        where: { id: booking.id },
+        data: { status: BookingStatus.COMPLETED, finalPrice: body.finalPrice, completedAt: new Date() },
+      });
+      await tx.payment.create({
+        data: {
+          bookingId: booking.id,
+          amount: body.finalPrice,
+          commissionAmount: commissionFor(body.finalPrice),
+        },
+      });
     });
 
+    const updated = await prisma.booking.findUnique({ where: { id: booking.id }, include: { payment: true } });
     res.json(updated);
   })
 );

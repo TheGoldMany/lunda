@@ -35,6 +35,7 @@ export function Layout() {
             <>
               <Link to="/provider/onboarding">Profilom</Link>
               <Link to="/provider/dashboard">Munkák</Link>
+              <Link to="/provider/planned">Tervezett munkák</Link>
             </>
           )}
           {user?.role === "ADMIN" && <Link to="/admin/verifications">Verifikációk</Link>}
